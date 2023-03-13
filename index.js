@@ -2,6 +2,7 @@
 
 var AWS = require('aws-sdk');
 var http = require('http');
+var https = require('https');
 var httpProxy = require('http-proxy');
 var express = require('express');
 var bodyParser = require('body-parser');
@@ -126,7 +127,8 @@ function getCredentials(req, res, next) {
 var options = {
     target: TARGET,
     changeOrigin: true,
-    secure: true
+    secure: true,
+    agent: new https.Agent()
 };
 
 var proxy = httpProxy.createProxyServer(options);
@@ -165,6 +167,14 @@ app.use(async function (req, res) {
     }
     proxy.web(req, res, {buffer: bufferStream});
 });
+
+proxy.on('error', function (err, req, res) {
+    // res.writeHead(500, {
+    //   'Content-Type': 'text/plain'
+    // });
+    console.error(`http-proxy error: ${err}`)
+    // res.end('Something went wrong. And we are reporting a custom error message.');
+  });
 
 proxy.on('proxyReq', function (proxyReq, req) {
     var endpoint = new AWS.Endpoint(ENDPOINT);
